@@ -15,66 +15,59 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-public class Client extends Application {
+public class Client extends Application implements ConnectionListener {
 
-    private static Socket socket;
-    private static DataInputThread dataInputThread;
-    private static ObjectOutputStream objectOutputStream;
+    private int[][] wins = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+
     private Button[][] buttons;
-    private boolean[][] btns;
-    private int[][] btnWinPositions = {{0, 1, 2}, {0, 4, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {2, 4, 6}, {3, 4, 5}, {6, 7, 8}};
-    private char mySymbol = 'X';
-    private char enemySymbol = 'O';
+    private String[][] btns;
+    private static char crossSymbol = 'X';
+    private static char zeroSymbol = 'O';
+    private boolean isPlayerX = true;
+    private boolean isPlayerO = false;
+
+    HashMap<Integer, Character> map = new HashMap<>();
+
+    public int turnCount = 0;
+
+    public boolean XTurn = true;
+    public boolean YTurn = false;
+
+    private static char lastSymbol;
+    private static ArrayList<Character> turns = new ArrayList<>();
+    private TCPConnection connection;
 
     public static void main(String[] args) throws IOException {
-        socket = new Socket(Protocol.IP, Protocol.PORT);
-        objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        turns.add(crossSymbol);
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        btns = new boolean[3][3];
+        Socket socket = new Socket(Protocol.IP, Protocol.PORT);
+        connection = new TCPConnection(Client.this, socket);
+
+        btns = new String[3][3];
         KeyFrame keyFrame = new KeyFrame(Duration.millis(500),
                 event -> {
                     for (int i = 0; i < btns.length; i++) {
                         for (int j = 0; j < btns[i].length; j++) {
-                            if (btns[i][j]) {
-                                buttons[i][j].setText(String.valueOf(enemySymbol));
-                                btns[i][j] = false;
+                            if (btns[i][j] != null) {
+                                buttons[i][j].setText(btns[i][j]);
                             }
                         }
                     }
                 });
+
         Timeline timeline = new Timeline(keyFrame);
         timeline.setCycleCount(-1);
         timeline.play();
-        dataInputThread = new DataInputThread(socket.getInputStream(), this);
-        System.out.println("Client");
+
         createWindow(primaryStage);
-    }
-
-    //TODO get from server who is X and who is O
-    // server flags players turn
-    // server checks who is winner
-    // can add timer for player turn (timer ends - enemy wins)
-
-
-    public void setPosition(int readInt) {
-        System.out.println("btn");
-        btns[readInt / 3][readInt % 3] = true;
-    }
-
-    public void getPosition(int readInt) {
-        try {
-            objectOutputStream.writeObject(readInt + "");
-            objectOutputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void createWindow(Stage primaryStage) {
@@ -103,21 +96,14 @@ public class Client extends Application {
                 buttons[i][j].setPrefHeight(70);
 
                 buttons[i][j].setOnAction(e -> {
-                    int xCount = 0, oCount = 0;
-                    String winner = "";
 
                     if (resultLabel.getText().equals("")) {
-
                         if (buttons[x][y].getText().equals("")) {
-                            buttons[x][y].setText(String.valueOf(mySymbol));
-                            buttons[x][y].setId("X");
-                            xCount++;
-                            getPosition(x * 3 + y);
-                            winner = check(buttons);
+                            connection.sendObject(x * 3 + y);
+                            turnCount = 0;
                         }
-
-
                     }
+
                 });
             }
         }
@@ -176,4 +162,35 @@ public class Client extends Application {
             return (buttons[1][1].getText());
         return ("");
     }
+
+    @Override
+    public void onConnectionReady(TCPConnection tcpConnection) {
+
+    }
+
+    @Override
+    public void onReceiveObject(TCPConnection tcpConnection, Object object) {
+        Integer a = (Integer) object;
+        int readInt = a % 10;
+        int i = readInt / 3;
+        int j = readInt % 3;
+
+        if (a / 10 == 1) {
+            btns[i][j] = (String.valueOf(crossSymbol));
+        } else {
+            btns[i][j] = (String.valueOf(zeroSymbol));
+        }
+
+    }
+
+    @Override
+    public void onDisconnect(TCPConnection tcpConnection) {
+
+    }
+
+    @Override
+    public void onException(TCPConnection tcpConnection, Exception e) {
+
+    }
 }
+
