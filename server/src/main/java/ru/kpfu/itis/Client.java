@@ -24,9 +24,12 @@ public class Client extends Application implements ConnectionListener {
     private int[][] wins = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
 
     private Button[][] buttons;
+    public Label winnerLabel;
+    public Label resultLabel;
     private String[][] btns;
     private static char crossSymbol = 'X';
     private static char zeroSymbol = 'O';
+
     private boolean isPlayerX = true;
     private boolean isPlayerO = false;
 
@@ -51,6 +54,8 @@ public class Client extends Application implements ConnectionListener {
         Socket socket = new Socket(Protocol.IP, Protocol.PORT);
         connection = new TCPConnection(Client.this, socket);
 
+        resultLabel = new Label();
+        winnerLabel = new Label();
         btns = new String[3][3];
         KeyFrame keyFrame = new KeyFrame(Duration.millis(500),
                 event -> {
@@ -58,6 +63,16 @@ public class Client extends Application implements ConnectionListener {
                         for (int j = 0; j < btns[i].length; j++) {
                             if (btns[i][j] != null) {
                                 buttons[i][j].setText(btns[i][j]);
+
+                                String winner = Checker.check(buttons);
+                                if (!winner.equals("")) {
+                                    winnerLabel.setId("winner");
+                                    winnerLabel.setText("ПОБЕДА");
+                                    resultLabel.setId(winner);
+                                    resultLabel.setText(winner);
+                                } else {
+                                    //TODO если ничья
+                                }
                             }
                         }
                     }
@@ -84,8 +99,6 @@ public class Client extends Application implements ConnectionListener {
         grid.setId("grid");
 
         buttons = new Button[3][3];
-        Label winnerLabel = new Label();
-        Label resultLabel = new Label();
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -96,15 +109,16 @@ public class Client extends Application implements ConnectionListener {
                 buttons[i][j].setPrefHeight(70);
 
                 buttons[i][j].setOnAction(e -> {
-
                     if (resultLabel.getText().equals("")) {
-                        if (buttons[x][y].getText().equals("")) {
-                            connection.sendObject(x * 3 + y);
-                            turnCount = 0;
+                        if (resultLabel.getText().equals("")) {
+                            if (buttons[x][y].getText().equals("")) {
+                                connection.sendObject(x * 3 + y);
+                            }
                         }
                     }
-
                 });
+
+
             }
         }
 
@@ -113,6 +127,7 @@ public class Client extends Application implements ConnectionListener {
                 for (int j = 0; j < 3; j++) {
                     buttons[i][j].setText("");
                     buttons[i][j].setId("empty");
+
                 }
             }
             winnerLabel.setId("");
@@ -141,26 +156,6 @@ public class Client extends Application implements ConnectionListener {
         Scene scene = new Scene(root, 250, 400);
         primaryStage.setScene(scene);
         primaryStage.show();
-    }
-
-    public static String check(Button[][] buttons) {
-        for (int i = 0; i < 3; i++) {
-            if (buttons[i][0].getText().equals(buttons[i][1].getText())
-                    && buttons[i][1].getText().equals(buttons[i][2].getText())
-                    && !buttons[i][2].getText().equals(""))
-                return (buttons[i][0].getText());
-            else if (buttons[0][i].getText().equals(buttons[1][i].getText())
-                    && buttons[1][i].getText().equals(buttons[2][i].getText()) &&
-                    !buttons[2][i].getText().equals(""))
-                return (buttons[0][i].getText());
-        }
-        if ((buttons[0][0].getText().equals(buttons[1][1].getText())
-                && buttons[1][1].getText().equals(buttons[2][2].getText()))
-                || (buttons[0][2].getText().equals(buttons[1][1].getText())
-                && buttons[1][1].getText().equals(buttons[2][0].getText()))
-                && !buttons[1][1].getText().equals(""))
-            return (buttons[1][1].getText());
-        return ("");
     }
 
     @Override

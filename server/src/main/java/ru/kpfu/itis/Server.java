@@ -6,10 +6,6 @@ import java.util.HashMap;
 
 public class Server implements ConnectionListener {
 
-    //    private static char crossSymbol = 'X';
-//    private static char zeroSymbol = 'O';
-//
-
     private int[][] wins = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
     private int[] positions = new int[9];
 
@@ -65,15 +61,5 @@ public class Server implements ConnectionListener {
     @Override
     public void onException(TCPConnection tcpConnection, Exception e) {
 
-    }
-}
-
-class Turn {
-    Integer position;
-    Character symbol;
-
-    public Turn(Integer position, Character symbol) {
-        this.position = position;
-        this.symbol = symbol;
     }
 }
