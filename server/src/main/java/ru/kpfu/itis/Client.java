@@ -17,11 +17,8 @@ import javafx.util.Duration;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Client extends Application implements ConnectionListener {
-
-    private int[][] wins = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
 
     private Button[][] buttons;
     public Label winnerLabel;
@@ -32,15 +29,13 @@ public class Client extends Application implements ConnectionListener {
 
     private boolean isPlayerX = true;
     private boolean isPlayerO = false;
-
-    HashMap<Integer, Character> map = new HashMap<>();
+    private boolean yourTurn = false;
 
     public int turnCount = 0;
 
-    public boolean XTurn = true;
-    public boolean YTurn = false;
+    public int XTurnCount;
+    public int OTurnCount;
 
-    private static char lastSymbol;
     private static ArrayList<Character> turns = new ArrayList<>();
     private TCPConnection connection;
 
@@ -63,15 +58,18 @@ public class Client extends Application implements ConnectionListener {
                         for (int j = 0; j < btns[i].length; j++) {
                             if (btns[i][j] != null) {
                                 buttons[i][j].setText(btns[i][j]);
-
+                                turnCount++;
                                 String winner = Checker.check(buttons);
                                 if (!winner.equals("")) {
                                     winnerLabel.setId("winner");
                                     winnerLabel.setText("ПОБЕДА");
                                     resultLabel.setId(winner);
                                     resultLabel.setText(winner);
-                                } else {
-                                    //TODO если ничья
+                                } else if (XTurnCount == 5 || OTurnCount == 5) {
+                                    winnerLabel.setId("winner");
+                                    winnerLabel.setText("НИЧЬЯ");
+                                    resultLabel.setId(winner);
+                                    resultLabel.setText(winner);
                                 }
                             }
                         }
@@ -90,8 +88,6 @@ public class Client extends Application implements ConnectionListener {
         root.setId("root");
         HBox top = new HBox();
         top.setId("top");
-        Button newGame = new Button("Новая игра");
-        newGame.setId("newGame");
         Button quit = new Button("Выход");
         quit.setId("quit");
 
@@ -122,28 +118,13 @@ public class Client extends Application implements ConnectionListener {
             }
         }
 
-        newGame.setOnAction(e -> {
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    buttons[i][j].setText("");
-                    buttons[i][j].setId("empty");
-
-                }
-            }
-            winnerLabel.setId("");
-            winnerLabel.setText("");
-            resultLabel.setId("");
-            resultLabel.setText("");
-        });
 
         quit.setOnAction(e -> System.exit(0));
 
-        newGame.setPrefWidth(100);
-        HBox.setMargin(newGame, new Insets(10, 0, 10, 15));
         quit.setPrefWidth(100);
-        HBox.setMargin(quit, new Insets(10, 0, 10, 20));
+        HBox.setMargin(quit, new Insets(10, 0, 10, 70));
         VBox.setMargin(grid, new Insets(20, 20, 20, 20));
-        top.getChildren().addAll(newGame, quit);
+        top.getChildren().addAll(quit);
         winnerLabel.setAlignment(Pos.CENTER);
         winnerLabel.setPrefWidth(70);
         VBox.setMargin(winnerLabel, new Insets(0, 0, 0, 90));
@@ -172,20 +153,22 @@ public class Client extends Application implements ConnectionListener {
 
         if (a / 10 == 1) {
             btns[i][j] = (String.valueOf(crossSymbol));
+            XTurnCount++;
+
         } else {
             btns[i][j] = (String.valueOf(zeroSymbol));
+            OTurnCount++;
         }
-
     }
 
     @Override
     public void onDisconnect(TCPConnection tcpConnection) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onException(TCPConnection tcpConnection, Exception e) {
-
+        throw new UnsupportedOperationException();
     }
 }
 
