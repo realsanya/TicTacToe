@@ -3,6 +3,7 @@ package ru.kpfu.itis;
 import javafx.scene.control.Button;
 
 public class Checker {
+
     public static String check(Button[][] buttons) {
         for (int i = 0; i < 3; i++) {
             if (buttons[i][0].getText().equals(buttons[i][1].getText())
